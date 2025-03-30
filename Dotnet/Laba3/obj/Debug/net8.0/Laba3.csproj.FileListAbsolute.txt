@@ -1,0 +1,14 @@
+/home/axawys/Projects/Dotnet/Laba3/bin/Debug/net8.0/Laba3
+/home/axawys/Projects/Dotnet/Laba3/bin/Debug/net8.0/Laba3.deps.json
+/home/axawys/Projects/Dotnet/Laba3/bin/Debug/net8.0/Laba3.runtimeconfig.json
+/home/axawys/Projects/Dotnet/Laba3/bin/Debug/net8.0/Laba3.dll
+/home/axawys/Projects/Dotnet/Laba3/bin/Debug/net8.0/Laba3.pdb
+/home/axawys/Projects/Dotnet/Laba3/obj/Debug/net8.0/Laba3.GeneratedMSBuildEditorConfig.editorconfig
+/home/axawys/Projects/Dotnet/Laba3/obj/Debug/net8.0/Laba3.AssemblyInfoInputs.cache
+/home/axawys/Projects/Dotnet/Laba3/obj/Debug/net8.0/Laba3.AssemblyInfo.cs
+/home/axawys/Projects/Dotnet/Laba3/obj/Debug/net8.0/Laba3.csproj.CoreCompileInputs.cache
+/home/axawys/Projects/Dotnet/Laba3/obj/Debug/net8.0/Laba3.dll
+/home/axawys/Projects/Dotnet/Laba3/obj/Debug/net8.0/refint/Laba3.dll
+/home/axawys/Projects/Dotnet/Laba3/obj/Debug/net8.0/Laba3.pdb
+/home/axawys/Projects/Dotnet/Laba3/obj/Debug/net8.0/Laba3.genruntimeconfig.cache
+/home/axawys/Projects/Dotnet/Laba3/obj/Debug/net8.0/ref/Laba3.dll

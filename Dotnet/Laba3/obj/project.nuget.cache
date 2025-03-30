@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "UZSYtspck28ClZzICR52L1uc5VtJlJ2DaQz+MDuKuOg9m7BcIvzwpSAQO36GNEz3orsm44qMT8MbLFaJhP3CQw==",
+  "success": true,
+  "projectFilePath": "/home/axawys/Projects/Dotnet/Laba3/Laba3.csproj",
+  "expectedPackageFiles": [
+    "/home/axawys/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.14/microsoft.aspnetcore.app.ref.8.0.14.nupkg.sha512"
+  ],
+  "logs": []
+}

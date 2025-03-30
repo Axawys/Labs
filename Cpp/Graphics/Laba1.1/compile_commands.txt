@@ -1,0 +1,2 @@
+g++ house.cpp -o house -lglut -lGLU -lGL
+g++ main.cpp -o main -lGL -lGLEW -lglfw
