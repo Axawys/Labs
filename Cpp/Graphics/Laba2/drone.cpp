@@ -14,6 +14,7 @@ float maxRadius = 0.5f; // Максимальный радиус
 bool isMoving = false; // Летит ли дрон
 bool isShrinking = true; // Сжимаем ли радиус или расширяем
 bool isClockwise = true; // Двигается ли по часовой стрелке
+bool rPressed = false; // Для отслеживания первого нажатия клавиши R
 
 void processInput(GLFWwindow* window) {
     // Проверяем нажатие клавиш
@@ -33,8 +34,12 @@ void processInput(GLFWwindow* window) {
     }
 
     // Изменение направления по 'r'
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS && !rPressed) {
         isClockwise = !isClockwise;
+        rPressed = true;  // Фиксируем, что клавиша была нажата
+    }
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE) {
+        rPressed = false;  // Разрешаем следующее нажатие клавиши R
     }
 
     // Ускорение
