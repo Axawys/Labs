@@ -2,26 +2,35 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cmath>
+#include <vector>
+
+// Структура для хранения точек следа
+struct TrailPoint {
+    float x, y;
+    float alpha; // Прозрачность для эффекта затухания
+};
 
 // Координаты дрона и параметры движения
 float droneX = 0.0f;
 float droneY = 0.0f;
 float angle = 0.0f;
-float radius = 0.5f;  // Начальный радиус
-float speed = 0.02f;  // Скорость движения
-float minRadius = 0.1f; // Минимальный радиус
-float maxRadius = 0.5f; // Максимальный радиус
-bool isMoving = false; // Летит ли дрон
-bool isShrinking = true; // Сжимаем ли радиус или расширяем
-bool isClockwise = true; // Двигается ли по часовой стрелке
-bool rPressed = false; // Для отслеживания первого нажатия клавиши R
+float radius = 0.5f;
+float speed = 0.02f;
+float minRadius = 0.1f;
+float maxRadius = 0.5f;
+bool isMoving = false;
+bool isShrinking = true;
+bool isClockwise = true;
+bool rPressed = false;
+
+// Вектор для хранения следа
+std::vector<TrailPoint> trail;
+const int maxTrailLength = 100; // Максимальная длина следа
 
 void processInput(GLFWwindow* window) {
-    // Проверяем нажатие клавиш
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true); // Закрываем окно
+        glfwSetWindowShouldClose(window, true);
 
-    // Запуск/остановка по пробелу
     static bool spacePressed = false;
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
         if (!spacePressed) {
@@ -33,93 +42,86 @@ void processInput(GLFWwindow* window) {
         spacePressed = false;
     }
 
-    // Изменение направления по 'r' и переключение режима изменения радиуса
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS && !rPressed) {
-        isClockwise = !isClockwise;  // Меняем направление
-        isShrinking = !isShrinking;  // Переключаем режим радиуса (уменьшать/увеличивать)
-        rPressed = true;  // Фиксируем, что клавиша была нажата
+        isClockwise = !isClockwise;
+        isShrinking = !isShrinking;
+        rPressed = true;
     }
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE) {
-        rPressed = false;  // Разрешаем следующее нажатие клавиши R
+        rPressed = false;
     }
 
-    // Ускорение
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         speed += 0.001f;
         if (speed > 0.1f) speed = 0.1f;
     }
-
-    // Замедление
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
         speed -= 0.001f;
         if (speed < 0.0f) speed = 0.0f;
     }
 
-    // Изменение радиуса влево и вправо
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        radius -= 0.003f;  // Увеличиваем скорость уменьшения радиуса
+        radius -= 0.003f;
         if (radius < minRadius) radius = minRadius;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        radius += 0.003f;  // Увеличиваем скорость увеличения радиуса
+        radius += 0.003f;
         if (radius > maxRadius) radius = maxRadius;
     }
 }
 
 void updateDronePosition() {
     if (isMoving) {
-        // Двигаемся по спирали
         droneX = radius * cos(angle);
         droneY = radius * sin(angle);
         
-        // Меняем направление движения в зависимости от isClockwise
         angle += isClockwise ? speed : -speed;
 
-        // Колебания радиуса
         if (isShrinking) {
-            radius -= speed * 0.02f; // Увеличиваем скорость сжатия радиуса
+            radius -= speed * 0.02f;
             if (radius <= minRadius) {
                 radius = minRadius;
-                isShrinking = false; // Переключаем режим на расширение
+                isShrinking = false;
             }
         } else {
-            radius += speed * 0.02f; // Увеличиваем скорость расширения радиуса
+            radius += speed * 0.02f;
             if (radius >= maxRadius) {
                 radius = maxRadius;
-                isShrinking = true; // Переключаем режим на сжатие
+                isShrinking = true;
             }
+        }
+
+        // Добавляем новую точку в след
+        trail.push_back({droneX, droneY, 1.0f});
+        if (trail.size() > maxTrailLength) {
+            trail.erase(trail.begin());
+        }
+
+        // Уменьшаем прозрачность старых точек
+        for (auto& point : trail) {
+            point.alpha -= 0.015f;
+            if (point.alpha < 0.0f) point.alpha = 0.0f;
         }
     }
 }
 
-void drawDashedSpiral() {
-    glColor3f(1.0f, 1.0f, 1.0f);  // Белый цвет для спирали
-    const int numSegments = 200;
-    float angleStep = 2.0f * M_PI / numSegments;
-
-    glBegin(GL_LINES);
-    for (int i = 0; i < numSegments; i++) {
-        float currentAngle = i * angleStep;
-        float nextAngle = (i + 1) * angleStep;
-        
-        // Определяем текущие и следующие координаты для двух точек
-        float x1 = radius * cos(currentAngle);
-        float y1 = radius * sin(currentAngle);
-        float x2 = radius * cos(nextAngle);
-        float y2 = radius * sin(nextAngle);
-        
-        // Рисуем линию (пунктир, только в случае определённых промежутков)
-        if (i % 2 == 0) {
-            glVertex2f(x1, y1);
-            glVertex2f(x2, y2);
-        }
+void renderTrail() {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    glBegin(GL_LINE_STRIP);
+    for (const auto& point : trail) {
+        glColor4f(1.0f, 0.5f, 0.0f, point.alpha); // Оранжевый след с затуханием
+        glVertex2f(point.x, point.y);
     }
     glEnd();
+    
+    glDisable(GL_BLEND);
 }
 
 void renderDrone() {
-    // Отрисовываем пунктирную спираль
-    drawDashedSpiral();
+    // Отрисовываем след
+    renderTrail();
 
     // Корпус
     glBegin(GL_QUADS);
@@ -132,7 +134,7 @@ void renderDrone() {
 
     // Пропеллеры 
     const int numSegments = 20;
-    const float propRadius = 0.03f; // Меньший радиус пропеллеров
+    const float propRadius = 0.03f;
     glColor3f(1.0f, 0.0f, 0.0f);
     
     float propPositions[4][2] = {
@@ -188,7 +190,7 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
-        updateDronePosition(); // Двигаем
+        updateDronePosition();
 
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
