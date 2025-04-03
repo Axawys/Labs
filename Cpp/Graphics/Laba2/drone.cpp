@@ -7,9 +7,10 @@
 float droneX = 0.0f;
 float droneY = 0.0f;
 float angle = 0.0f;
-float radius = 0.0f;
-float speed = 0.02f;    // скорость (можно менять)
-bool isMoving = false;  // летит или нет
+float radius = 0.5f; // Начальный радиус
+float speed = 0.02f; // скорость
+bool isMoving = false; // летит или нет
+bool moveTowardsCenter = true; // Направление полета (к центру или к внешнему радиусу)
 
 void processInput(GLFWwindow* window) {
     // Проверяем нажатие клавиш
@@ -43,13 +44,29 @@ void processInput(GLFWwindow* window) {
         speed -= 0.001f;
         if (speed < 0.0f) speed = 0.0f;
     }
+
+    // Смена направления по "r"
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        moveTowardsCenter = !moveTowardsCenter; // Меняем направление
+    }
 }
 
 void updateDronePosition() {
     if (isMoving) {
+        // Обновление позиции дрона с учетом спирального движения
         droneX = radius * cos(angle);
         droneY = radius * sin(angle);
-        angle += speed; // Увеличиваем угол (чтобы летел)
+        angle += speed; // Увеличиваем угол для спирального движения
+
+        // Если движемся к центру, уменьшаем радиус
+        // Если движемся наружу, увеличиваем радиус
+        if (moveTowardsCenter) {
+            radius -= speed * 0.01f;
+            if (radius < 0.1f) radius = 0.1f; // Минимальный радиус
+        } else {
+            radius += speed * 0.01f;
+            if (radius > 0.5f) radius = 0.5f; // Максимальный радиус
+        }
     }
 }
 
@@ -57,22 +74,22 @@ void renderDrone() {
     // Корпус
     glBegin(GL_QUADS);
     glColor3f(0.5f, 0.5f, 0.5f);
-    glVertex2f(droneX - 0.2f, droneY - 0.05f);
-    glVertex2f(droneX + 0.2f, droneY - 0.05f);
-    glVertex2f(droneX + 0.2f, droneY + 0.05f);
-    glVertex2f(droneX - 0.2f, droneY + 0.05f);
+    glVertex2f(droneX - 0.1f, droneY - 0.025f);
+    glVertex2f(droneX + 0.1f, droneY - 0.025f);
+    glVertex2f(droneX + 0.1f, droneY + 0.025f);
+    glVertex2f(droneX - 0.1f, droneY + 0.025f);
     glEnd();
 
     // Пропеллеры 
     const int numSegments = 20;
-    const float propRadius = 0.05f;
+    const float propRadius = 0.03f; // Меньший радиус пропеллеров
     glColor3f(1.0f, 0.0f, 0.0f);
     
     float propPositions[4][2] = {
-        {-0.25f, 0.15f},
-        {0.25f, 0.15f},
-        {-0.25f, -0.15f},
-        {0.25f, -0.15f}
+        {-0.15f, 0.1f},
+        {0.15f, 0.1f},
+        {-0.15f, -0.1f},
+        {0.15f, -0.1f}
     };
     
     for (auto& pos : propPositions) {
@@ -88,7 +105,6 @@ void renderDrone() {
 }
 
 int main() {
-    // Ввод радиуса (если введешь криво, будет 0.5)
     std::cout << "Введите радиус полета дрона (например, 0.5): ";
     std::cin >> radius;
 
@@ -98,14 +114,14 @@ int main() {
     }
 
     if (!glfwInit()) {
-        std::cerr << "не запустился glfw (что-то пошло не так)" << std::endl;
+        std::cerr << "не запустился glfw" << std::endl;
         return -1;
     }
 
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(800, 600, "Drone Control", NULL, NULL);
     if (!window) {
-        std::cerr << "не создалось окно (печаль)" << std::endl;
+        std::cerr << "не создалось окно" << std::endl;
         glfwTerminate();
         return -1;
     }
@@ -116,7 +132,7 @@ int main() {
     glfwMakeContextCurrent(window);
 
     if (glewInit() != GLEW_OK) {
-        std::cerr << "не запустился glew (опять печаль)" << std::endl;
+        std::cerr << "не запустился glew" << std::endl;
         return -1;
     }
 
