@@ -7,10 +7,12 @@
 float droneX = 0.0f;
 float droneY = 0.0f;
 float angle = 0.0f;
-float radius = 0.5f; // Начальный радиус
-float speed = 0.02f; // скорость
-bool isMoving = false; // летит или нет
-bool moveTowardsCenter = true; // Направление полета (к центру или к внешнему радиусу)
+float radius = 0.5f;  // Начальный радиус
+float speed = 0.02f;  // Скорость движения
+float minRadius = 0.1f; // Минимальный радиус
+float maxRadius = 0.5f; // Максимальный радиус
+bool isMoving = false; // Летит ли дрон
+bool isShrinking = true; // Сжимаем ли радиус или расширяем
 
 void processInput(GLFWwindow* window) {
     // Проверяем нажатие клавиш
@@ -45,27 +47,36 @@ void processInput(GLFWwindow* window) {
         if (speed < 0.0f) speed = 0.0f;
     }
 
-    // Смена направления по "r"
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-        moveTowardsCenter = !moveTowardsCenter; // Меняем направление
+    // Изменение радиуса влево и вправо
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        radius -= 0.001f;
+        if (radius < minRadius) radius = minRadius;
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        radius += 0.001f;
+        if (radius > maxRadius) radius = maxRadius;
     }
 }
 
 void updateDronePosition() {
     if (isMoving) {
-        // Обновление позиции дрона с учетом спирального движения
         droneX = radius * cos(angle);
         droneY = radius * sin(angle);
         angle += speed; // Увеличиваем угол для спирального движения
 
-        // Если движемся к центру, уменьшаем радиус
-        // Если движемся наружу, увеличиваем радиус
-        if (moveTowardsCenter) {
+        // Колебания радиуса
+        if (isShrinking) {
             radius -= speed * 0.01f;
-            if (radius < 0.1f) radius = 0.1f; // Минимальный радиус
+            if (radius <= minRadius) {
+                radius = minRadius;
+                isShrinking = false; // Переключаем направление
+            }
         } else {
             radius += speed * 0.01f;
-            if (radius > 0.5f) radius = 0.5f; // Максимальный радиус
+            if (radius >= maxRadius) {
+                radius = maxRadius;
+                isShrinking = true; // Переключаем направление
+            }
         }
     }
 }
