@@ -33,9 +33,10 @@ void processInput(GLFWwindow* window) {
         spacePressed = false;
     }
 
-    // Изменение направления по 'r'
+    // Изменение направления по 'r' и переключение режима изменения радиуса
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS && !rPressed) {
-        isClockwise = !isClockwise;
+        isClockwise = !isClockwise;  // Меняем направление
+        isShrinking = !isShrinking;  // Переключаем режим радиуса (уменьшать/увеличивать)
         rPressed = true;  // Фиксируем, что клавиша была нажата
     }
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE) {
@@ -79,13 +80,13 @@ void updateDronePosition() {
             radius -= speed * 0.02f; // Увеличиваем скорость сжатия радиуса
             if (radius <= minRadius) {
                 radius = minRadius;
-                isShrinking = false; // Переключаем направление
+                isShrinking = false; // Переключаем режим на расширение
             }
         } else {
             radius += speed * 0.02f; // Увеличиваем скорость расширения радиуса
             if (radius >= maxRadius) {
                 radius = maxRadius;
-                isShrinking = true; // Переключаем направление
+                isShrinking = true; // Переключаем режим на сжатие
             }
         }
     }
