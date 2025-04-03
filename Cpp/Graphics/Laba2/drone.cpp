@@ -56,11 +56,11 @@ void processInput(GLFWwindow* window) {
 
     // Изменение радиуса влево и вправо
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        radius -= 0.001f;
+        radius -= 0.003f;  // Увеличиваем скорость уменьшения радиуса
         if (radius < minRadius) radius = minRadius;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        radius += 0.001f;
+        radius += 0.003f;  // Увеличиваем скорость увеличения радиуса
         if (radius > maxRadius) radius = maxRadius;
     }
 }
@@ -76,13 +76,13 @@ void updateDronePosition() {
 
         // Колебания радиуса
         if (isShrinking) {
-            radius -= speed * 0.01f;
+            radius -= speed * 0.02f; // Увеличиваем скорость сжатия радиуса
             if (radius <= minRadius) {
                 radius = minRadius;
                 isShrinking = false; // Переключаем направление
             }
         } else {
-            radius += speed * 0.01f;
+            radius += speed * 0.02f; // Увеличиваем скорость расширения радиуса
             if (radius >= maxRadius) {
                 radius = maxRadius;
                 isShrinking = true; // Переключаем направление
@@ -91,7 +91,35 @@ void updateDronePosition() {
     }
 }
 
+void drawDashedSpiral() {
+    glColor3f(1.0f, 1.0f, 1.0f);  // Белый цвет для спирали
+    const int numSegments = 200;
+    float angleStep = 2.0f * M_PI / numSegments;
+
+    glBegin(GL_LINES);
+    for (int i = 0; i < numSegments; i++) {
+        float currentAngle = i * angleStep;
+        float nextAngle = (i + 1) * angleStep;
+        
+        // Определяем текущие и следующие координаты для двух точек
+        float x1 = radius * cos(currentAngle);
+        float y1 = radius * sin(currentAngle);
+        float x2 = radius * cos(nextAngle);
+        float y2 = radius * sin(nextAngle);
+        
+        // Рисуем линию (пунктир, только в случае определённых промежутков)
+        if (i % 2 == 0) {
+            glVertex2f(x1, y1);
+            glVertex2f(x2, y2);
+        }
+    }
+    glEnd();
+}
+
 void renderDrone() {
+    // Отрисовываем пунктирную спираль
+    drawDashedSpiral();
+
     // Корпус
     glBegin(GL_QUADS);
     glColor3f(0.5f, 0.5f, 0.5f);
