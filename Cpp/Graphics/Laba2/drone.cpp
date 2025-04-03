@@ -13,15 +13,12 @@ float minRadius = 0.1f; // Минимальный радиус
 float maxRadius = 0.5f; // Максимальный радиус
 bool isMoving = false; // Летит ли дрон
 bool isShrinking = true; // Сжимаем ли радиус или расширяем
+bool isClockwise = true; // Двигается ли по часовой стрелке
 
 void processInput(GLFWwindow* window) {
     // Проверяем нажатие клавиш
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true); // Закрываем окно
-
-    // Фуллскрин по F
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
-        glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, 800, 600, GLFW_DONT_CARE);
 
     // Запуск/остановка по пробелу
     static bool spacePressed = false;
@@ -33,6 +30,11 @@ void processInput(GLFWwindow* window) {
     }
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
         spacePressed = false;
+    }
+
+    // Изменение направления по 'r'
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        isClockwise = !isClockwise;
     }
 
     // Ускорение
@@ -60,9 +62,12 @@ void processInput(GLFWwindow* window) {
 
 void updateDronePosition() {
     if (isMoving) {
+        // Двигаемся по спирали
         droneX = radius * cos(angle);
         droneY = radius * sin(angle);
-        angle += speed; // Увеличиваем угол для спирального движения
+        
+        // Меняем направление движения в зависимости от isClockwise
+        angle += isClockwise ? speed : -speed;
 
         // Колебания радиуса
         if (isShrinking) {
