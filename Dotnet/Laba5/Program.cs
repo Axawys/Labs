@@ -1,57 +1,74 @@
 ﻿using System;
+using System.IO;
+using System.Linq;
 
 class Program{
     static void Main(){
-        // Пример исходного массива
-        int[] array = { 3, 0, 5, 7, 0, 2, 9, 4, 1 };
-        int n = array.Length;
+        string filePath = "array.txt";
 
-        // определение индекса максимального элемента
-        int maxIndex = 0;
-        for (int i = 1; i < n; i++){
-            if (array[i] > array[maxIndex]){
-                maxIndex = i;
-            }
+        if (!File.Exists(filePath)){
+            Console.WriteLine($"Файл '{filePath}' не найден.");
+            return;
         }
-        Console.WriteLine($"Индекс максимального элемента: {maxIndex}");
 
-        // произведение элементов между первыми двумя нулями
-        int firstZero = -1, secondZero = -1;
-        for (int i = 0; i < n; i++){
-            if (array[i] == 0){
-                if (firstZero == -1)
-                    firstZero = i;
-                else{
-                    secondZero = i;
-                    break;
+        try {
+            // Считываем массив из файла
+            string fileContent = File.ReadAllText(filePath);
+            int[] array = fileContent
+                .Split(new[] { ' ', '\t', '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToArray();
+            int n = array.Length;
+
+            // Определение индекса максимального элемента
+            int maxIndex = 0;
+            for (int i = 1; i < n; i++){
+                if (array[i] > array[maxIndex]){
+                    maxIndex = i;
                 }
             }
-        }
+            Console.WriteLine($"Индекс максимального элемента: {maxIndex}");
 
-        if (firstZero != -1 && secondZero != -1 && secondZero - firstZero > 1){
-            int product = 1;
-            for (int i = firstZero + 1; i < secondZero; i++){
-                product *= array[i];
+            // Произведение элементов между первыми двумя нулями
+            int firstZero = -1, secondZero = -1;
+            for (int i = 0; i < n; i++){
+                if (array[i] == 0){
+                    if (firstZero == -1)
+                        firstZero = i;
+                    else{
+                        secondZero = i;
+                        break;
+                    }
+                }
             }
-            Console.WriteLine($"Произведение элементов между первым и вторым нулями: {product}");
-        }
-        else{
-            Console.WriteLine("Произведение невозможно вычислить (меньше двух нулей или между ними нет элементов).");
-        }
 
-        // Переставить элементы: сначала с нечётных позиций, затем с чётных
-        int[] transformed = new int[n];
-        int index = 0;
+            if (firstZero != -1 && secondZero != -1 && secondZero - firstZero > 1){
+                int product = 1;
+                for (int i = firstZero + 1; i < secondZero; i++){
+                    product *= array[i];
+                }
+                Console.WriteLine($"Произведение элементов между первым и вторым нулями: {product}");
+            }
+            else{
+                Console.WriteLine("Произведение невозможно вычислить (меньше двух нулей или между ними нет элементов).");
+            }
 
-        // Чётные позиции 
-        for (int i = 0; i < n; i += 2){
-            transformed[index++] = array[i];
-        }
-        for (int i = 1; i < n; i += 2){
-            transformed[index++] = array[i];
-        }
+            // Переставить элементы: сначала с чётных позиций, затем с нечётных
+            int[] transformed = new int[n];
+            int index = 0;
 
-        Console.WriteLine("Преобразованный массив:");
-        Console.WriteLine(string.Join(", ", transformed));
+            for (int i = 0; i < n; i += 2){
+                transformed[index++] = array[i];
+            }
+            for (int i = 1; i < n; i += 2){
+                transformed[index++] = array[i];
+            }
+
+            Console.WriteLine("Преобразованный массив:");
+            Console.WriteLine(string.Join(", ", transformed));
+        }
+        catch (Exception ex){
+            Console.WriteLine($"Ошибка при обработке файла: {ex.Message}");
+        }
     }
 }
