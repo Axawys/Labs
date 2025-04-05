@@ -11,6 +11,14 @@ obj/
 *.deps.json
 
 # Игнорировать файлы, специфичные для MSBuild
-*.csproj.CoreCompileInuts.cache
+*.csproj.CoreCompileInputs.cache
 *.csproj.FileListAbsolute.txt
 *.genruntimeconfig.cache
+
+# Игнорировать временно файлы IDE
+.vs/
+*.user
+*.suo
+
+# Кеши кроссплатформенных сборок
+*.db
