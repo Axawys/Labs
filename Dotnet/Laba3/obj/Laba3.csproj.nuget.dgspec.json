@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/axawys/Projects/Dotnet/Laba3/Laba3.csproj": {}
+    "/home/axawys/Projects/Labs/Dotnet/Laba3/Laba3.csproj": {}
   },
   "projects": {
-    "/home/axawys/Projects/Dotnet/Laba3/Laba3.csproj": {
+    "/home/axawys/Projects/Labs/Dotnet/Laba3/Laba3.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/axawys/Projects/Dotnet/Laba3/Laba3.csproj",
+        "projectUniqueName": "/home/axawys/Projects/Labs/Dotnet/Laba3/Laba3.csproj",
         "projectName": "Laba3",
-        "projectPath": "/home/axawys/Projects/Dotnet/Laba3/Laba3.csproj",
+        "projectPath": "/home/axawys/Projects/Labs/Dotnet/Laba3/Laba3.csproj",
         "packagesPath": "/home/axawys/.nuget/packages/",
-        "outputPath": "/home/axawys/Projects/Dotnet/Laba3/obj/",
+        "outputPath": "/home/axawys/Projects/Labs/Dotnet/Laba3/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/axawys/.nuget/NuGet/NuGet.Config"
