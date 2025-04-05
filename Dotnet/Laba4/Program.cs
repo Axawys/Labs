@@ -1,11 +1,9 @@
 ﻿using System;
 
-class Rectangle
-{
+class Rectangle{
     private int x, y, width, height; // координаты левого верхнего угла и размеры
 
-    public Rectangle(int x, int y, int width, int height)
-    {
+    public Rectangle(int x, int y, int width, int height){
         if (width <= 0 || height <= 0)
             throw new ArgumentException("Ширина и высота должны быть положительными");
         this.x = x;
@@ -16,39 +14,34 @@ class Rectangle
 
     public int X { get => x; set => x = value; }
     public int Y { get => y; set => y = value; }
-    public int Width
-    {
+    public int Width{
         get => width;
-        set
-        {
+        set{
             if (value <= 0) throw new ArgumentException("Некорректная ширина");
             width = value;
         }
     }
-    public int Height
-    {
+    public int Height{
         get => height;
-        set
-        {
+        set{
             if (value <= 0) throw new ArgumentException("Некорректная высота");
             height = value;
         }
     }
 
-    public void Move(int dx, int dy) // перемещение
-    {
+    //Перемещение
+    public void Move(int dx, int dy){
         x += dx;
         y += dy;
     }
 
-    public void Resize(int newWidth, int newHeight) // изменение размера
-    {
+    //Изменение размера
+    public void Resize(int newWidth, int newHeight){
         Width = newWidth;
         Height = newHeight;
     }
 
-    public static Rectangle BoundingBox(Rectangle r1, Rectangle r2) // наименьший прямоугольник
-    {
+    public static Rectangle BoundingBox(Rectangle r1, Rectangle r2){
         int minX = Math.Min(r1.x, r2.x);
         int minY = Math.Min(r1.y, r2.y);
         int maxX = Math.Max(r1.x + r1.width, r2.x + r2.width);
@@ -56,8 +49,8 @@ class Rectangle
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
     }
 
-    public static Rectangle? Intersection(Rectangle r1, Rectangle r2) // пересечение
-    {
+    //Пересечение
+    public static Rectangle? Intersection(Rectangle r1, Rectangle r2){
         int x1 = Math.Max(r1.x, r2.x);
         int y1 = Math.Max(r1.y, r2.y);
         int x2 = Math.Min(r1.x + r1.width, r2.x + r2.width);
@@ -71,10 +64,8 @@ class Rectangle
     public override string ToString() => $"({x}, {y}), {width}x{height}";
 }
 
-class Program
-{
-    static void Main()
-    {
+class Program{
+    static void Main(){
         Rectangle r1 = new Rectangle(2, 3, 5, 4);
         Rectangle r2 = new Rectangle(4, 5, 6, 3);
         
