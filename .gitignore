@@ -1,0 +1,16 @@
+# Игнорировать папки сборки
+bin/
+obj/
+
+# Игнорировать результаты компиляции
+*.dll
+*.pdb
+*.exe
+*.cache
+*.runtimeconfig.json
+*.deps.json
+
+# Игнорировать файлы, специфичные для MSBuild
+*.csproj.CoreCompileInuts.cache
+*.csproj.FileListAbsolute.txt
+*.genruntimeconfig.cache
