@@ -1,0 +1,15 @@
+/home/axawys/Projects/Labs/Dotnet/Laba5/bin/Debug/net8.0/Laba5
+/home/axawys/Projects/Labs/Dotnet/Laba5/bin/Debug/net8.0/Laba5.deps.json
+/home/axawys/Projects/Labs/Dotnet/Laba5/bin/Debug/net8.0/Laba5.runtimeconfig.json
+/home/axawys/Projects/Labs/Dotnet/Laba5/bin/Debug/net8.0/Laba5.dll
+/home/axawys/Projects/Labs/Dotnet/Laba5/bin/Debug/net8.0/Laba5.pdb
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/Laba5.GeneratedMSBuildEditorConfig.editorconfig
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/Laba5.AssemblyInfoInputs.cache
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/Laba5.AssemblyInfo.cs
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/Laba5.csproj.CoreCompileInputs.cache
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/Laba5.sourcelink.json
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/Laba5.dll
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/refint/Laba5.dll
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/Laba5.pdb
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/Laba5.genruntimeconfig.cache
+/home/axawys/Projects/Labs/Dotnet/Laba5/obj/Debug/net8.0/ref/Laba5.dll
