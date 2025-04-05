@@ -9,7 +9,6 @@ class Program
         
         Console.WriteLine("  x      |  arctg(x) (series) |  arctg(x) (Math.Atan) |  terms");
         Console.WriteLine("---------------------------------------------------------------");
-        
         for (double x = -1; x <= 1; x += dx)
         {
             double sum = 0;
