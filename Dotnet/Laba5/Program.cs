@@ -4,16 +4,9 @@ using System.Linq;
 
 class Program{
     static void Main(){
-        string filePath = "array.txt";
-
-        if (!File.Exists(filePath)){
-            Console.WriteLine($"Файл '{filePath}' не найден.");
-            return;
-        }
-
         try {
             // Считываем массив из файла
-            string fileContent = File.ReadAllText(filePath);
+            string fileContent = File.ReadAllText("array.txt");
             int[] array = fileContent
                 .Split(new[] { ' ', '\t', '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(int.Parse)
