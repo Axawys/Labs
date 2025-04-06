@@ -1,0 +1,1 @@
+g++ drone.cpp -o drone -lGLEW -lglfw -lGL -lGLU
