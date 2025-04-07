@@ -5,34 +5,34 @@
 int main() {
     setlocale(LC_ALL, "");
     Factory factory;
-    int choice;
-    std::string id, data;
+    int выбор;
+    std::string id, данные;
 
     while (true) {
-        std::cout << "\n1. Create SymbString\n2. Create BinString\n3. Delete object\n4. Show all\n5. Show by ID\n0. Exit\nChoice: ";
-        std::cin >> choice;
-        if (choice == 0) break;
+        std::cout << "\n1. Создать SymbString\n2. Создать BinString\n3. Удалить объект\n4. Показать все\n5. Показать по ID\n0. Выход\nВаш выбор: ";
+        std::cin >> выбор;
+        if (выбор == 0) break;
 
-        switch (choice) {
+        switch (выбор) {
             case 1:
-                std::cout << "Enter ID: "; std::cin >> id;
-                std::cout << "Enter data: "; std::cin >> data;
-                factory.createSymbString(id, data);
+                std::cout << "Введите ID: "; std::cin >> id;
+                std::cout << "Введите данные: "; std::cin >> данные;
+                factory.createSymbString(id, данные);
                 break;
             case 2:
-                std::cout << "Enter ID: "; std::cin >> id;
-                std::cout << "Enter binary data: "; std::cin >> data;
-                factory.createBinString(id, data);
+                std::cout << "Введите ID: "; std::cin >> id;
+                std::cout << "Введите бинарные данные: "; std::cin >> данные;
+                factory.createBinString(id, данные);
                 break;
             case 3:
-                std::cout << "Enter ID to delete: "; std::cin >> id;
+                std::cout << "Введите ID для удаления: "; std::cin >> id;
                 factory.deleteById(id);
                 break;
             case 4:
                 factory.showAll();
                 break;
             case 5:
-                std::cout << "Enter ID to show: "; std::cin >> id;
+                std::cout << "Введите ID для отображения: "; std::cin >> id;
                 factory.showById(id);
                 break;
         }
