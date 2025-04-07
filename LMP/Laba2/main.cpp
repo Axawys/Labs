@@ -1,7 +1,9 @@
 #include <iostream>
+#include <locale.h>
 #include "factory.h"
 
 int main() {
+    setlocale(LC_ALL, "");
     Factory factory;
     int choice;
     std::string id, data;
