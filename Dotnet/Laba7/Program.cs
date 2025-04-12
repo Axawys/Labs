@@ -16,11 +16,17 @@ class Program {
         string text = File.ReadAllText(path);
         string[] sentences = Regex.Split(text, @"(?<=[.!?])\s+");
 
+        bool found = false;
         Console.WriteLine("\nПредложения без запятых:\n");
         foreach(string sentence in sentences) {
-            if(!sentence.Contains(",")) 
+            if(!sentence.Contains(",")) {
                 Console.WriteLine(sentence.Trim());
+                found = true;
+            }
         }
+
+        if(!found)
+            Console.WriteLine("Все предложения содержат запятую.");
 
         Console.WriteLine("\nПрограмма завершила работу!");
     }

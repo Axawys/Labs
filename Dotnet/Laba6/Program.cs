@@ -5,12 +5,10 @@ class Program {
         Random rand = new Random();
         int[,] matrix = new int[size, size];
 
-        // Задаём первую строку явно
         int[] firstRow = { 1, 2, 3, 4, 5, 6, 7, 8 };
         for(int j = 0; j < size; j++)
             matrix[0, j] = firstRow[j];
 
-        // Остальные строки — случайные
         for(int i = 1; i < size; i++)
             for(int j = 0; j < size; j++)
                 matrix[i, j] = rand.Next(-10, 11);
