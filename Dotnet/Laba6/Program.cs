@@ -1,17 +1,22 @@
 ﻿using System;
+using System.IO;
 
 class Program {
-    static int[,] GenerateMatrix(int size) {
-        Random rand = new Random();
+    static int[,] ReadMatrixFromFile(string filename, int size) {
         int[,] matrix = new int[size, size];
+        string[] lines = File.ReadAllLines(filename);
 
-        int[] firstRow = { 1, 2, 3, 4, 5, 6, 7, 8 };
-        for(int j = 0; j < size; j++)
-            matrix[0, j] = firstRow[j];
+        if(lines.Length != size)
+            throw new Exception("Ошибка: количество строк в файле не равно размеру матрицы.");
 
-        for(int i = 1; i < size; i++)
+        for(int i = 0; i < size; i++) {
+            string[] parts = lines[i].Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            if(parts.Length != size)
+                throw new Exception($"Ошибка: в строке {i} не {size} элементов.");
+
             for(int j = 0; j < size; j++)
-                matrix[i, j] = rand.Next(-10, 11);
+                matrix[i, j] = int.Parse(parts[j]);
+        }
 
         return matrix;
     }
@@ -77,15 +82,20 @@ class Program {
 
     static void Main() {
         const int size = 8;
+        string filename = "array.txt";
 
-        Console.WriteLine("Программа работает с матрицей 8x8, где первая строка задаётся вручную, а остальные — случайные.");
+        try {
+            Console.WriteLine("Программа считывает матрицу из файла array.txt.");
 
-        int[,] matrix = GenerateMatrix(size);
-        PrintMatrix(matrix);
+            int[,] matrix = ReadMatrixFromFile(filename, size);
+            PrintMatrix(matrix);
 
-        CheckMatchingRowsAndColumns(matrix);
-        SumRowsWithNegatives(matrix);
+            CheckMatchingRowsAndColumns(matrix);
+            SumRowsWithNegatives(matrix);
 
-        Console.WriteLine("\nПрограмма завершила работу!");
+            Console.WriteLine("\nПрограмма завершила работу!");
+        } catch(Exception ex) {
+            Console.WriteLine("Ошибка: " + ex.Message);
+        }
     }
 }
