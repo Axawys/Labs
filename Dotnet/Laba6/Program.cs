@@ -46,7 +46,7 @@ class Program {
             }
 
             if(match) {
-                Console.Write(k + " ");
+                Console.Write(k+1 + " ");
                 found = true;
             }
         }
