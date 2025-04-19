@@ -27,7 +27,5 @@ class Program {
 
         if(!found)
             Console.WriteLine("Все предложения содержат запятую.");
-
-        Console.WriteLine("\nПрограмма завершила работу!");
     }
 }
