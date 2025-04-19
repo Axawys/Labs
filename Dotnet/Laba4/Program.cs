@@ -79,7 +79,7 @@ class Program{
         Console.WriteLine("После изменения размера r2: " + r2);
         
         Rectangle bounding = Rectangle.BoundingBox(r1, r2);
-        Console.WriteLine("Наименьший ограничивающий прямоугольник: " + bounding);
+        Console.WriteLine("Наименьший прямоугольник, содержащий два других: " + bounding);
         
         Rectangle? intersect = Rectangle.Intersection(r1, r2);
         Console.WriteLine(intersect != null ? "Пересечение: " + intersect : "Нет пересечения");
@@ -91,7 +91,7 @@ class Program{
         Console.WriteLine("После второго изменения размера r1: " + r1);
         
         Rectangle bounding2 = Rectangle.BoundingBox(r1, r2);
-        Console.WriteLine("Наименьший охватывающий прямоугольник (после изменений): " + bounding2);
+        Console.WriteLine("Наименьший  прямоугольник, содержащий два других (после изменений): " + bounding2);
         
         Rectangle? intersect2 = Rectangle.Intersection(r1, r2);
         Console.WriteLine(intersect2 != null ? "Пересечение после изменений: " + intersect2 : "Нет пересечения после изменений");
