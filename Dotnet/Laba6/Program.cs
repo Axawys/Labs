@@ -85,8 +85,6 @@ class Program {
         string filename = "array.txt";
 
         try {
-            Console.WriteLine("Программа считывает матрицу из файла array.txt.");
-
             int[,] matrix = ReadMatrixFromFile(filename, size);
             PrintMatrix(matrix);
 
