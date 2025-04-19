@@ -93,7 +93,6 @@ class Program {
             CheckMatchingRowsAndColumns(matrix);
             SumRowsWithNegatives(matrix);
 
-            Console.WriteLine("\nПрограмма завершила работу!");
         } catch(Exception ex) {
             Console.WriteLine("Ошибка: " + ex.Message);
         }
