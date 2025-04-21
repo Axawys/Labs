@@ -13,4 +13,5 @@ public:
     void deleteById(const std::string& id);
     void showAll() const;
     void showById(const std::string& id) const;
+    void addBinStrings(const std::string& id1, const std::string& id2);
 };
