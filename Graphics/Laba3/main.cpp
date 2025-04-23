@@ -142,7 +142,7 @@ std::vector<float> makeDisk(float r1, float r2, int seg) {
 
 int main() {
     glfwInit();
-    GLFWwindow* window = glfwCreateWindow(800,600,"Cygnus X-1",NULL,NULL);
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Cygnus X-1", NULL, NULL); // Изменено на FullHD
     glfwMakeContextCurrent(window);
     glewInit();
     glEnable(GL_DEPTH_TEST);
@@ -220,7 +220,7 @@ int main() {
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 proj = glm::perspective(glm::radians(45.0f),800.0f/600.0f,0.1f,100.0f);
+        glm::mat4 proj = glm::perspective(glm::radians(45.0f),1920.0f/1080.0f,0.1f,100.0f); // Изменено соотношение сторон
         glm::mat4 view = glm::lookAt(camPos,camPos+camFront,camUp);
         float time = glfwGetTime();
         float angle = time*0.2f;
