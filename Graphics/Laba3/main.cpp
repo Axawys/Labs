@@ -3,9 +3,57 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
+#include <random>
 
-// Шейдеры
-const char* vertShader = R"(
+// Вершинный шейдер для звезды (с деформацией)
+const char* starVertShader = R"(
+#version 330 core
+layout(location=0) in vec3 pos;
+layout(location=1) in vec3 normal;
+out vec3 FragPos;
+out vec3 Normal;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform float time;
+
+// Функции шума
+float hash(float n) { return fract(sin(n)*43758.5453); }
+float noise(vec3 x) {
+    vec3 p = floor(x);
+    vec3 f = fract(x);
+    f = f*f*(3.0-2.0*f);
+    float n = p.x + p.y*57.0 + 113.0*p.z;
+    return mix(mix(mix(hash(n+0.0), hash(n+1.0),f.x),
+               mix(hash(n+57.0), hash(n+58.0),f.x),f.y),
+               mix(mix(hash(n+113.0), hash(n+114.0),f.x),
+               mix(hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
+}
+float fbm(vec3 p) {
+    float f = 0.0;
+    p *= 3.0;
+    f += 0.5000*noise(p); p *= 2.01;
+    f += 0.2500*noise(p); p *= 2.02;
+    f += 0.1250*noise(p); p *= 2.03;
+    f += 0.0625*noise(p);
+    return f;
+}
+
+void main() {
+    // Деформация поверхности с эффектом "волос"
+    vec3 p = pos;
+    float displacement = fbm(p * 5.0 + time * 0.3) * 0.2; // Базовый шум
+    float spike = pow(fbm(p * 2.0 + time * 0.1 + 10.0), 3.0) * 0.5; // Протуберанцы
+    p += normal * (displacement + spike); // Смещение по нормали
+
+    FragPos = vec3(model * vec4(p, 1.0));
+    Normal = mat3(transpose(inverse(model))) * normal;
+    gl_Position = projection * view * model * vec4(p, 1.0);
+}
+)";
+
+// Простой вершинный шейдер для черной дыры и диска (без деформации)
+const char* simpleVertShader = R"(
 #version 330 core
 layout(location=0) in vec3 pos;
 layout(location=1) in vec3 normal;
@@ -29,38 +77,97 @@ out vec4 color;
 uniform float time;
 uniform vec3 viewPos;
 
-// Шум для текстуры звезды
-float noise(vec3 p) {
-    return fract(sin(dot(p, vec3(12.9898,78.233,45.5432))) * 43758.5453);
+// Функции шума
+float hash(float n) { return fract(sin(n)*43758.5453); }
+float noise(vec3 x) {
+    vec3 p = floor(x);
+    vec3 f = fract(x);
+    f = f*f*(3.0-2.0*f);
+    float n = p.x + p.y*57.0 + 113.0*p.z;
+    return mix(mix(mix(hash(n+0.0), hash(n+1.0),f.x),
+               mix(hash(n+57.0), hash(n+58.0),f.x),f.y),
+               mix(mix(hash(n+113.0), hash(n+114.0),f.x),
+               mix(hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
+}
+float fbm(vec3 p) {
+    float f = 0.0;
+    p *= 3.0;
+    f += 0.5000*noise(p); p *= 2.01;
+    f += 0.2500*noise(p); p *= 2.02;
+    f += 0.1250*noise(p); p *= 2.03;
+    f += 0.0625*noise(p);
+    return f;
+}
+
+// Псевдослучайная точка на сфере
+vec3 randomSpherePoint(float seed) {
+    float u = hash(seed)*2.0-1.0;
+    float theta = hash(seed+1.0)*2.0*3.14159;
+    float r = sqrt(1.0 - u*u);
+    return vec3(r*cos(theta), r*sin(theta), u);
+}
+
+// Эффект вспышки плазмы
+float plasmaFlare(vec3 fragPos, vec3 flareCenter, float time, float seed) {
+    float lifeTime = mod(time + seed*10.0, 4.0);
+    float growthTime = 0.5;
+    float decayTime = 2.0;
+    float size = 0.0;
+    if (lifeTime < growthTime) {
+        size = lifeTime / growthTime;
+    } else if (lifeTime < growthTime + decayTime) {
+        size = 1.0 - (lifeTime - growthTime) / decayTime;
+    }
+    float dist = length(fragPos - flareCenter * 2.0);
+    float intensity = size * exp(-dist*2.0) * 2.0;
+    float turbulence = fbm(fragPos*5.0 + time*2.0 + seed) * 0.5;
+    float wave = sin(dist*20.0 - time*15.0 + seed*10.0) * 0.2;
+    return clamp(intensity * (1.0 + turbulence + wave), 0.0, 1.0);
+}
+
+// Эффект коронального выброса
+float coronalEjection(vec3 fragPos, vec3 normal, float time, float seed) {
+    vec3 dir = normalize(fragPos);
+    float angle = dot(normalize(normal), dir);
+    float activeRegion = smoothstep(0.7, 0.9, noise(fragPos*3.0 + seed));
+    float lifePhase = mod(time*0.5 + seed*5.0, 3.0);
+    float lifeIntensity = exp(-lifePhase*2.0) * 2.0;
+    float shape = pow(1.0 - abs(angle), 2.0);
+    return activeRegion * lifeIntensity * shape * 0.7;
 }
 
 void main() {
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
-    
-    // Базовый цвет голубого гиганта
     vec3 baseColor = vec3(0.3, 0.5, 1.0);
+    float coreDist = length(FragPos);
+    float coreIntensity = 1.0 - smoothstep(0.0, 1.5, coreDist);
+    vec3 coreColor = mix(baseColor, vec3(1.0, 0.9, 0.8), coreIntensity * 0.9);
+    float granulation = fbm(FragPos * 10.0 + time * 0.3) * 0.4;
+    float rim = 1.0 - dot(viewDir, norm);
+    rim = pow(rim, 2.0) * 0.8;
     
-    // Яркое ядро
-    float coreIntensity = 1.0 - smoothstep(0.0, 1.5, length(FragPos));
-    vec3 coreColor = mix(baseColor, vec3(1.0), coreIntensity * 0.8);
-    
-    // Грануляция поверхности
-    vec3 noiseCoord = FragPos * 2.0 + time * 0.5;
-    float granulation = noise(noiseCoord) * 0.3;
+    // Вспышки плазмы
+    vec3 flareColor = vec3(0.0);
+    for (int i = 0; i < 6; i++) {
+        float seed = float(i) + floor(time / 4.0) * 100.0;
+        vec3 flareCenter = randomSpherePoint(seed);
+        float flareIntensity = plasmaFlare(FragPos, flareCenter, time, seed);
+        vec3 flareCol = mix(vec3(1.0, 0.9, 0.8), vec3(0.5, 0.7, 1.0), flareIntensity*0.7);
+        flareColor += flareCol * flareIntensity;
+    }
     
     // Корональные выбросы
-    float corona = sin(time*2.0 + FragPos.x*10.0 + FragPos.y*7.0 + FragPos.z*5.0) * 0.2;
+    float corona = 0.0;
+    for (int i = 0; i < 3; i++) {
+        float seed = float(i) + floor(time / 3.0) * 50.0;
+        corona += coronalEjection(FragPos, norm, time, seed);
+    }
     
-    // Эффект лимбового затемнения
-    float rim = 1.0 - dot(viewDir, norm);
-    rim = pow(rim, 2.0) * 0.7;
-    
-    // Финальный цвет с эффектами
-    vec3 finalColor = coreColor * (1.0 + rim + corona + granulation);
-    
-    // Пульсация звезды
-    float pulse = 0.7 + 0.3 * sin(time * 1.5);
+    // Финальный цвет
+    vec3 finalColor = coreColor * (1.0 + rim + granulation) + flareColor + corona*vec3(0.8, 0.9, 1.0);
+    float pulse = 0.8 + 0.2 * sin(time * 1.3);
+    finalColor = mix(finalColor, finalColor*vec3(1.0, 0.9, 0.7), pulse*0.3);
     color = vec4(finalColor * pulse, 1.0);
 }
 )";
@@ -142,35 +249,43 @@ std::vector<float> makeDisk(float r1, float r2, int seg) {
 
 int main() {
     glfwInit();
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Cygnus X-1", NULL, NULL); // Изменено на FullHD
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Star with Plasma Flares", NULL, NULL);
     glfwMakeContextCurrent(window);
     glewInit();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-    // Шейдеры
+    // Шейдеры для звезды
     unsigned starProg = glCreateProgram();
-    unsigned vsh = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vsh,1,&vertShader,NULL);
-    glCompileShader(vsh);
-    glAttachShader(starProg,vsh);
+    unsigned starVsh = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(starVsh,1,&starVertShader,NULL);
+    glCompileShader(starVsh);
+    glAttachShader(starProg,starVsh);
     unsigned starFsh = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(starFsh,1,&starFragShader,NULL);
     glCompileShader(starFsh);
     glAttachShader(starProg,starFsh);
     glLinkProgram(starProg);
 
+    // Шейдеры для черной дыры
     unsigned simpleProg = glCreateProgram();
-    glAttachShader(simpleProg,vsh);
+    unsigned simpleVsh = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(simpleVsh,1,&simpleVertShader,NULL);
+    glCompileShader(simpleVsh);
+    glAttachShader(simpleProg,simpleVsh);
     unsigned simpleFsh = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(simpleFsh,1,&simpleFragShader,NULL);
     glCompileShader(simpleFsh);
     glAttachShader(simpleProg,simpleFsh);
     glLinkProgram(simpleProg);
 
+    // Шейдеры для диска
     unsigned diskProg = glCreateProgram();
-    glAttachShader(diskProg,vsh);
+    unsigned diskVsh = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(diskVsh,1,&simpleVertShader,NULL);
+    glCompileShader(diskVsh);
+    glAttachShader(diskProg,diskVsh);
     unsigned diskFsh = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(diskFsh,1,&diskFragShader,NULL);
     glCompileShader(diskFsh);
@@ -178,8 +293,8 @@ int main() {
     glLinkProgram(diskProg);
 
     // Объекты
-    auto sph = makeSphere(2,24);
-    auto sphIdx = makeSphereIndices(24);
+    auto sph = makeSphere(2,48);
+    auto sphIdx = makeSphereIndices(48);
     auto disk = makeDisk(0.7,2.5,64);
 
     unsigned VAOs[3], VBOs[3], EBO;
@@ -220,7 +335,7 @@ int main() {
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 proj = glm::perspective(glm::radians(45.0f),1920.0f/1080.0f,0.1f,100.0f); // Изменено соотношение сторон
+        glm::mat4 proj = glm::perspective(glm::radians(45.0f),1920.0f/1080.0f,0.1f,100.0f);
         glm::mat4 view = glm::lookAt(camPos,camPos+camFront,camUp);
         float time = glfwGetTime();
         float angle = time*0.2f;
@@ -243,7 +358,7 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(simpleProg,"model"),1,GL_FALSE,&bhModel[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(simpleProg,"view"),1,GL_FALSE,&view[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(simpleProg,"projection"),1,GL_FALSE,&proj[0][0]);
-        glUniform3f(glGetUniformLocation(simpleProg,"objColor"),0,0,0);
+        glUniform3f(glGetUniformLocation(simpleProg,"objColor"),0,0,0); // Исправлено: 0,0,merzen -> 0,0,0
         glBindVertexArray(VAOs[1]);
         glDrawElements(GL_TRIANGLES,sphIdx.size(),GL_UNSIGNED_INT,0);
 
