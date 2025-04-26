@@ -2,20 +2,25 @@
 
 public class RectangleClass
 {
-    public int Xpos;
-    public int Ypos;
-    public int Wid;
-    public int Hei;
+    public int Xpos { get; private set; }
+    public int Ypos { get; private set; }
+    public int Wid { get; private set; }
+    public int Hei { get; private set; }
 
     public RectangleClass(int x, int y, int w, int h)
     {
         if (w <= 0 || h <= 0)
-            throw new Exception("Нельзя создать с такими размерами!");
+            throw new ArgumentException("Нельзя создать с такими размерами!");
         
         Xpos = x;
         Ypos = y;
         Wid = w;
         Hei = h;
+    }
+
+    ~RectangleClass()
+    {
+        Console.WriteLine($"Деструктор: Прямоугольник {ToString()} уничтожен");
     }
 
     public void MoveRect(int dx, int dy)
@@ -27,7 +32,19 @@ public class RectangleClass
     public void ChangeSize(int newW, int newH)
     {
         if (newW <= 0 || newH <= 0)
-            throw new Exception("Неправильный размер!");
+            throw new ArgumentException("Неправильный размер!");
+        
+        Wid = newW;
+        Hei = newH;
+    }
+
+    public void ChangeSize(int delta)
+    {
+        int newW = Wid + delta;
+        int newH = Hei + delta;
+        
+        if (newW <= 0 || newH <= 0)
+            throw new ArgumentException("Неправильный дельта-размер!");
         
         Wid = newW;
         Hei = newH;
@@ -52,8 +69,8 @@ public class RectangleClass
 
         if (endX > startX && endY > startY)
             return new RectangleClass(startX, startY, endX - startX, endY - startY);
-        else
-            return null;
+        
+        return null;
     }
 
     public override string ToString()
@@ -66,6 +83,7 @@ class Program
 {
     static void Main()
     {
+        // Оригинальный сценарий
         RectangleClass rect1 = new RectangleClass(2, 3, 5, 4);
         RectangleClass rect2 = new RectangleClass(4, 5, 6, 3);
         
@@ -108,5 +126,10 @@ class Program
         RectangleClass overlap2 = RectangleClass.FindOverlap(rect1, rect2);
         Console.WriteLine("Проверка пересечения снова:");
         Console.WriteLine(overlap2 == null ? "Нет пересечения" : overlap2.ToString());
+
+        // Освобождаем ресурсы и вызываем деструкторы
+        Console.WriteLine("\nЗавершение работы...");
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
     }
 }
