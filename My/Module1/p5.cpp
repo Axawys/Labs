@@ -29,6 +29,6 @@ int main(){
     for(int i = 0;i<=n;i++){
         printf("%3d ", fact(n)/(fact(i)*fact(n-i)));
     }
-    cout<<"\n\nПрограмма завершила работу!\n";
+    cout<<endl;
     return 0;
 }
