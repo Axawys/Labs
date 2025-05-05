@@ -3,7 +3,7 @@
 
 void sortTrainsByDestination(TRAIN arr[], int size) {
     std::sort(arr, arr + size, [](const TRAIN& a, const TRAIN& b) {
-        return a.getDestination() < b.getDestination();
+        return a.getDepartureTime() < b.getDepartureTime();
     });
 }
 

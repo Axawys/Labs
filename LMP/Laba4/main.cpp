@@ -3,7 +3,7 @@
 #include "utils.h"
 
 int main() {
-    const int SIZE = 8;
+    const int SIZE = 3;
     TRAIN trains[SIZE];
 
     std::cout << "Введите данные для " << SIZE << " поездов:\n";
