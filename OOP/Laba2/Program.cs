@@ -10,7 +10,7 @@ public class RectangleClass
     public RectangleClass(int x, int y, int w, int h)
     {
         if (w <= 0 || h <= 0)
-            throw new ArgumentException("Нельзя создать с такими размерами!");
+            throw new ArgumentException("Размер должен быть положительным");
         
         Xpos = x;
         Ypos = y;
@@ -32,7 +32,7 @@ public class RectangleClass
     public void ChangeSize(int newW, int newH)
     {
         if (newW <= 0 || newH <= 0)
-            throw new ArgumentException("Неправильный размер!");
+            throw new ArgumentException("Неправильный размер для изменения!");
         
         Wid = newW;
         Hei = newH;
@@ -103,7 +103,7 @@ class Program
         Console.WriteLine();
 
         RectangleClass big = RectangleClass.GetBigRectangle(rect1, rect2);
-        Console.WriteLine("Общий ограничивающий прямоугольник:");
+        Console.WriteLine("Наименьший ограничивающий прямоугольник:");
         Console.WriteLine(big);
         Console.WriteLine();
 
@@ -127,8 +127,6 @@ class Program
         Console.WriteLine("Проверка пересечения снова:");
         Console.WriteLine(overlap2 == null ? "Нет пересечения" : overlap2.ToString());
 
-        // Освобождаем ресурсы и вызываем деструкторы
-        Console.WriteLine("\nЗавершение работы...");
         GC.Collect();
         GC.WaitForPendingFinalizers();
     }
