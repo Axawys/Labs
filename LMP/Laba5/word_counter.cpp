@@ -19,7 +19,7 @@ int count_short_words(const std::string& filename, int max_letters) {
     string word;
     
     while (infile >> word) {
-        // Считаем количество символов (а не байт)
+        // Считаем количество символов (не байт)
         int length = 0;
         for (char c : word) {
             if ((c & 0xC0) != 0x80) { // Подсчет только начальных байт UTF-8 символов
