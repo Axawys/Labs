@@ -13,8 +13,8 @@ struct Coin {
     float angularSpeed;
     float descentSpeed;
     bool active;
-    float alpha; // For fading out
-    float fadeTime; // Time since falling below hole
+    float alpha; // Для затухания
+    float fadeTime; // Время с момента падения ниже отверстия
 };
 
 std::vector<Coin> coins;
@@ -24,16 +24,17 @@ float hole_radius = 0.1f;
 bool keyPressed = false;
 bool oKeyPressed = false;
 bool disintegrate = false;
-bool disintegrationTriggered = false; // Track if disintegration has occurred
+bool disintegrationTriggered = false; // Отслеживание дезинтеграции
 float disintegrateTime = 0.0f;
 const float disintegrateDuration = 1.0f;
-const float coin_fade_duration = 0.5f; // Duration for coins to fade out
-int spacePressCount = 0; // Track SPACE key presses
+const float coin_fade_duration = 0.5f; // Длительность затухания монет
+int spacePressCount = 0; // Счетчик нажатий SPACE
 
-// Camera variables
+// Переменные камеры
 float cameraAngleX = 0.0f;
 float cameraAngleY = 30.0f;
 float cameraDistance = 3.0f;
+float cameraOffsetY = 0.0f; // Смещение камеры по оси OY
 double lastMouseX = 0.0;
 double lastMouseY = 0.0;
 bool mousePressed = false;
@@ -65,7 +66,7 @@ void setupLighting() {
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
     glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
 
-    // Glossy material properties for funnel
+    // Свойства материала для глянцевого конуса
     GLfloat materialSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     GLfloat materialShininess[] = { 50.0f };
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
@@ -98,7 +99,7 @@ void drawFunnel(float deltaTime) {
         glPushMatrix();
         glTranslatef(offset_x, 0.0f, offset_z);
 
-        // Draw inner surface
+        // Внутренняя поверхность
         glCullFace(GL_BACK);
         glBegin(GL_TRIANGLE_STRIP);
         for (int i = 0; i <= quadrant_segments; ++i) {
@@ -115,7 +116,7 @@ void drawFunnel(float deltaTime) {
         }
         glEnd();
 
-        // Draw outer surface
+        // Внешняя поверхность
         glCullFace(GL_FRONT);
         glBegin(GL_TRIANGLE_STRIP);
         for (int i = 0; i <= quadrant_segments; ++i) {
@@ -143,11 +144,11 @@ void drawCoin(const Coin& coin) {
     glTranslatef(coin.position.x, coin.position.y, coin.position.z);
     glRotatef(coin.angle * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
 
-    // Yellow glowing material
+    // Желтый светящийся материал
     GLfloat emission[] = { 0.5f * coin.alpha, 0.4f * coin.alpha, 0.0f, coin.alpha };
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emission);
 
-    // Draw front face
+    // Передняя грань
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0.0f, 0.0f, 1.0f);
     glColor4f(1.0f, 0.85f, 0.1f, coin.alpha);
@@ -160,7 +161,7 @@ void drawCoin(const Coin& coin) {
     }
     glEnd();
 
-    // Draw back face
+    // Задняя грань
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0.0f, 0.0f, -1.0f);
     glVertex3f(0.0f, 0.0f, 0.0f);
@@ -172,7 +173,7 @@ void drawCoin(const Coin& coin) {
     }
     glEnd();
 
-    // Draw edge
+    // Край
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= segments; ++i) {
         float theta = (float)i / segments * 2.0f * M_PI;
@@ -184,7 +185,7 @@ void drawCoin(const Coin& coin) {
     }
     glEnd();
 
-    // Reset emission
+    // Сброс свечения
     GLfloat noEmission[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, noEmission);
     
@@ -197,18 +198,17 @@ void updateCoins(float deltaTime) {
         if (!coin.active) continue;
 
         if (coin.position.y > hole_height) {
-            // Inside funnel: spiral motion
-            float t = (coin.position.y + funnel_height) / funnel_height;
-            float max_radius = (funnel_radius - hole_radius) * t + hole_radius;
-            float coin_radius = 0.06f;
-            float r = max_radius - coin_radius - 0.05f;
+            // Внутри конуса: спиральное движение
+            float r_y = funnel_radius + (hole_radius - funnel_radius) * (coin.position.y / hole_height);
+            float r = r_y - 0.06f - 0.01f; // coin_radius=0.06f, margin=0.01f
+            if (r < 0.0f) r = 0.0f;
 
             coin.angle += coin.angularSpeed * deltaTime;
             coin.position.x = r * cos(coin.angle);
             coin.position.z = r * sin(coin.angle);
             coin.position.y -= coin.descentSpeed * deltaTime;
         } else {
-            // Below funnel: continue falling and fading
+            // Ниже конуса: падение и затухание
             coin.position.y -= coin.descentSpeed * deltaTime;
             coin.fadeTime += deltaTime;
             coin.alpha = 1.0f - coin.fadeTime / coin_fade_duration;
@@ -275,7 +275,7 @@ int main() {
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        // Handle SPACE key for coin spawning
+        // Обработка SPACE для спавна монет
         int spaceState = glfwGetKey(window, GLFW_KEY_SPACE);
         if (spaceState == GLFW_PRESS && !keyPressed && !disintegrate) {
             Coin newCoin;
@@ -295,7 +295,7 @@ int main() {
             keyPressed = false;
         }
 
-        // Handle O key for funnel disintegration (only once)
+        // Обработка O для дезинтеграции конуса (один раз)
         int oState = glfwGetKey(window, GLFW_KEY_O);
         if (oState == GLFW_PRESS && !oKeyPressed && !disintegrationTriggered) {
             disintegrate = true;
@@ -307,20 +307,51 @@ int main() {
             oKeyPressed = false;
         }
 
+        // Управление камерой стрелками
+        float rotationSpeed = 100.0f; // Градусов в секунду
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+            cameraAngleX -= rotationSpeed * deltaTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+            cameraAngleX += rotationSpeed * deltaTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+            cameraAngleY += rotationSpeed * deltaTime;
+            if (cameraAngleY > 89.0f) cameraAngleY = 89.0f;
+        }
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+            cameraAngleY -= rotationSpeed * deltaTime;
+            if (cameraAngleY < -89.0f) cameraAngleY = -89.0f;
+        }
+
+        // Управление камерой по оси OY (W/S)
+        float moveSpeed = 2.0f; // Скорость перемещения по оси OY (единиц в секунду)
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            cameraOffsetY += moveSpeed * deltaTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            cameraOffsetY -= moveSpeed * deltaTime;
+        }
+        // Ограничения на высоту
+        const float minOffsetY = -5.0f;
+        const float maxOffsetY = 5.0f;
+        if (cameraOffsetY < minOffsetY) cameraOffsetY = minOffsetY;
+        if (cameraOffsetY > maxOffsetY) cameraOffsetY = maxOffsetY;
+
         updateCoins(deltaTime);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
 
-        // Set up camera
+        // Настройка камеры
         float camX = cameraDistance * cos(glm::radians(cameraAngleY)) * sin(glm::radians(cameraAngleX));
-        float camY = cameraDistance * sin(glm::radians(cameraAngleY));
+        float camY = cameraDistance * sin(glm::radians(cameraAngleY)) + cameraOffsetY;
         float camZ = cameraDistance * cos(glm::radians(cameraAngleY)) * cos(glm::radians(cameraAngleX));
-        gluLookAt(camX, camY, camZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+        gluLookAt(camX, camY, camZ, 0.0f, cameraOffsetY, 0.0f, 0.0f, 1.0f, 0.0f);
 
         setupLighting();
         
-        // Draw coins first
+        // Рисование монет
         glCullFace(GL_BACK);
         for (const auto& coin : coins) {
             if (coin.active) {
@@ -328,7 +359,7 @@ int main() {
             }
         }
         
-        // Draw funnel
+        // Рисование конуса
         drawFunnel(deltaTime);
 
         glfwSwapBuffers(window);
