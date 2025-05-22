@@ -7,34 +7,50 @@
 #include <cmath>
 #include <ctime>
 
-struct Coin {
-    glm::vec3 position;
-    float angle;
-    float angularSpeed;
-    float descentSpeed;
-    bool active;
-    float alpha; // Для затухания
-    float fadeTime; // Время с момента падения ниже отверстия
-};
-
-std::vector<Coin> coins;
+// Параметры конуса
 float funnel_radius = 1.0f;
 float funnel_height = 1.5f;
 float hole_radius = 0.1f;
+
+// Параметры цилиндра
+const float cylinder_radius = 0.3f;
+const float cylinder_height = 0.2f;
+const float cylinder_base_y = -funnel_height + hole_radius * funnel_height / funnel_radius - cylinder_height;
+
+// Физические параметры
+const float gravity = -9.8f;
+const float restitution = 0.5f;
+const float friction = 0.8f;
+
+struct Coin {
+    glm::vec3 position;
+    glm::vec3 velocity;
+    float angle;
+    float angularSpeed;
+    bool active;
+    float alpha;
+    float fadeTime;
+    bool stopped;
+    float tilt_x;
+    float tilt_z;
+};
+
+std::vector<Coin> coins;
+float accumulated_height = cylinder_base_y; // Глобальная переменная
 bool keyPressed = false;
 bool oKeyPressed = false;
 bool disintegrate = false;
-bool disintegrationTriggered = false; // Отслеживание дезинтеграции
+bool disintegrationTriggered = false;
 float disintegrateTime = 0.0f;
 const float disintegrateDuration = 1.0f;
-const float coin_fade_duration = 0.5f; // Длительность затухания монет
-int spacePressCount = 0; // Счетчик нажатий SPACE
+const float coin_fade_duration = 0.5f;
+int spacePressCount = 0;
 
 // Переменные камеры
 float cameraAngleX = 0.0f;
 float cameraAngleY = 30.0f;
 float cameraDistance = 3.0f;
-float cameraOffsetY = 0.0f; // Смещение камеры по оси OY
+float cameraOffsetY = 0.0f;
 double lastMouseX = 0.0;
 double lastMouseY = 0.0;
 bool mousePressed = false;
@@ -66,7 +82,6 @@ void setupLighting() {
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
     glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
 
-    // Свойства материала для глянцевого конуса
     GLfloat materialSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     GLfloat materialShininess[] = { 50.0f };
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular);
@@ -99,7 +114,6 @@ void drawFunnel(float deltaTime) {
         glPushMatrix();
         glTranslatef(offset_x, 0.0f, offset_z);
 
-        // Внутренняя поверхность
         glCullFace(GL_BACK);
         glBegin(GL_TRIANGLE_STRIP);
         for (int i = 0; i <= quadrant_segments; ++i) {
@@ -116,7 +130,6 @@ void drawFunnel(float deltaTime) {
         }
         glEnd();
 
-        // Внешняя поверхность
         glCullFace(GL_FRONT);
         glBegin(GL_TRIANGLE_STRIP);
         for (int i = 0; i <= quadrant_segments; ++i) {
@@ -137,18 +150,106 @@ void drawFunnel(float deltaTime) {
     }
 }
 
+void drawCylinder() {
+    const int segments = 128;
+    float top_y = cylinder_base_y + cylinder_height;
+
+    // Внешняя поверхность цилиндра
+    glCullFace(GL_BACK);
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i <= segments; ++i) {
+        float theta = (float)i / segments * 2.0f * M_PI;
+        float x = cylinder_radius * cos(theta);
+        float z = cylinder_radius * sin(theta);
+        glNormal3f(cos(theta), 0.0f, sin(theta));
+        glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
+        glVertex3f(x, top_y, z);
+        glVertex3f(x, cylinder_base_y, z);
+    }
+    glEnd();
+
+    // Внутренняя поверхность цилиндра
+    glCullFace(GL_FRONT);
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i <= segments; ++i) {
+        float theta = (float)i / segments * 2.0f * M_PI;
+        float x = cylinder_radius * cos(theta);
+        float z = cylinder_radius * sin(theta);
+        glNormal3f(-cos(theta), 0.0f, -sin(theta));
+        glColor4f(0.4f, 0.4f, 0.4f, 1.0f);
+        glVertex3f(x, top_y, z);
+        glVertex3f(x, cylinder_base_y, z);
+    }
+    glEnd();
+
+    // Нижняя грань (видимая сверху)
+    glCullFace(GL_BACK);
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
+    glVertex3f(0.0f, cylinder_base_y, 0.0f);
+    for (int i = segments; i >= 0; --i) {
+        float theta = (float)i / segments * 2.0f * M_PI;
+        float x = cylinder_radius * cos(theta);
+        float z = cylinder_radius * sin(theta);
+        glVertex3f(x, cylinder_base_y, z);
+    }
+    glEnd();
+
+    // Нижняя грань (видимая снизу)
+    glCullFace(GL_FRONT);
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0.0f, -1.0f, 0.0f);
+    glColor4f(0.6f, 0.6f, 0.6f, 1.0f);
+    glVertex3f(0.0f, cylinder_base_y, 0.0f);
+    for (int i = 0; i <= segments; ++i) {
+        float theta = (float)i / segments * 2.0f * M_PI;
+        float x = cylinder_radius * cos(theta);
+        float z = cylinder_radius * sin(theta);
+        glVertex3f(x, cylinder_base_y, z);
+    }
+    glEnd();
+}
+
+void drawCoinShadow(const Coin& coin, float accumulated_height) {
+    const int segments = 32;
+    float radius = 0.06f;
+    float shadow_y = coin.stopped ? coin.position.y : accumulated_height;
+
+    glPushMatrix();
+    glTranslatef(coin.position.x, shadow_y + 0.001f, coin.position.z);
+    glScalef(1.0f + 0.2f * fabs(coin.tilt_x), 1.0f, 1.0f + 0.2f * fabs(coin.tilt_z));
+
+    glDisable(GL_LIGHTING);
+    glBegin(GL_TRIANGLE_FAN);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.3f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    for (int i = 0; i <= segments; ++i) {
+        float theta = (float)i / segments * 2.0f * M_PI;
+        float x = radius * cos(theta);
+        float z = radius * sin(theta);
+        glVertex3f(x, 0.0f, z);
+    }
+    glEnd();
+    glEnable(GL_LIGHTING);
+    glPopMatrix();
+}
+
 void drawCoin(const Coin& coin) {
     const int segments = 32;
     float radius = 0.06f;
     glPushMatrix();
     glTranslatef(coin.position.x, coin.position.y, coin.position.z);
-    glRotatef(coin.angle * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
+    if (!coin.stopped) {
+        glRotatef(coin.angle * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
+    } else {
+        glRotatef(coin.tilt_x * 180.0f / M_PI, 1.0f, 0.0f, 0.0f);
+        glRotatef(coin.tilt_z * 180.0f / M_PI, 0.0f, 0.0f, 1.0f);
+    }
 
-    // Желтый светящийся материал
     GLfloat emission[] = { 0.5f * coin.alpha, 0.4f * coin.alpha, 0.0f, coin.alpha };
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emission);
 
-    // Передняя грань
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0.0f, 0.0f, 1.0f);
     glColor4f(1.0f, 0.85f, 0.1f, coin.alpha);
@@ -161,7 +262,6 @@ void drawCoin(const Coin& coin) {
     }
     glEnd();
 
-    // Задняя грань
     glBegin(GL_TRIANGLE_FAN);
     glNormal3f(0.0f, 0.0f, -1.0f);
     glVertex3f(0.0f, 0.0f, 0.0f);
@@ -173,7 +273,6 @@ void drawCoin(const Coin& coin) {
     }
     glEnd();
 
-    // Край
     glBegin(GL_QUAD_STRIP);
     for (int i = 0; i <= segments; ++i) {
         float theta = (float)i / segments * 2.0f * M_PI;
@@ -185,7 +284,6 @@ void drawCoin(const Coin& coin) {
     }
     glEnd();
 
-    // Сброс свечения
     GLfloat noEmission[] = { 0.0f, 0.0f, 0.0f, 1.0f };
     glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, noEmission);
     
@@ -194,26 +292,93 @@ void drawCoin(const Coin& coin) {
 
 void updateCoins(float deltaTime) {
     float hole_height = -funnel_height + hole_radius * funnel_height / funnel_radius;
+    const float coin_radius = 0.06f;
+    const float coin_thickness = 0.01f;
+
     for (auto& coin : coins) {
-        if (!coin.active) continue;
+        if (!coin.active || coin.stopped) continue;
 
         if (coin.position.y > hole_height) {
-            // Внутри конуса: спиральное движение
             float r_y = funnel_radius + (hole_radius - funnel_radius) * (coin.position.y / hole_height);
-            float r = r_y - 0.06f - 0.01f; // coin_radius=0.06f, margin=0.01f
+            float r = r_y - coin_radius - 0.01f;
             if (r < 0.0f) r = 0.0f;
 
             coin.angle += coin.angularSpeed * deltaTime;
             coin.position.x = r * cos(coin.angle);
             coin.position.z = r * sin(coin.angle);
-            coin.position.y -= coin.descentSpeed * deltaTime;
+            coin.velocity.y += gravity * deltaTime;
+            coin.position.y += coin.velocity.y * deltaTime;
         } else {
-            // Ниже конуса: падение и затухание
-            coin.position.y -= coin.descentSpeed * deltaTime;
-            coin.fadeTime += deltaTime;
-            coin.alpha = 1.0f - coin.fadeTime / coin_fade_duration;
-            if (coin.fadeTime >= coin_fade_duration) {
-                coin.active = false;
+            coin.velocity.y += gravity * deltaTime;
+            coin.position += coin.velocity * deltaTime;
+            coin.angle += coin.angularSpeed * deltaTime;
+
+            float r = sqrt(coin.position.x * coin.position.x + coin.position.z * coin.position.z);
+            if (r > cylinder_radius - coin_radius) {
+                glm::vec3 normal(coin.position.x / r, 0.0f, coin.position.z / r);
+                float dot = glm::dot(coin.velocity, normal);
+                coin.velocity -= 2.0f * dot * normal * restitution; // Исправлено
+                coin.velocity *= friction;
+                float scale = (cylinder_radius - coin_radius - 0.01f) / r;
+                coin.position.x *= scale;
+                coin.position.z *= scale;
+            }
+
+            for (auto& other : coins) {
+                if (&other != &coin && other.stopped) {
+                    float distance = glm::length(coin.position - other.position);
+                    if (distance < 2.0f * coin_radius && distance > 0.0f) {
+                        glm::vec3 direction = (coin.position - other.position) / distance;
+                        float dot = glm::dot(coin.velocity, direction);
+                        coin.velocity -= 2.0f * dot * direction * restitution;
+                        coin.velocity *= friction;
+                        float overlap = 2.0f * coin_radius - distance;
+                        coin.position += direction * overlap * 0.5f;
+                    }
+                }
+            }
+
+            if (coin.position.y <= accumulated_height + coin_thickness) {
+                coin.stopped = true;
+                coin.position.y = accumulated_height;
+                coin.velocity = glm::vec3(0.0f);
+                coin.alpha = 1.0f;
+
+                coin.tilt_x = (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 0.3f;
+                coin.tilt_z = (static_cast<float>(std::rand()) / RAND_MAX - 0.5f) * 0.3f;
+
+                bool collision;
+                const float min_distance = 2.0f * coin_radius;
+                int max_attempts = 10;
+                int attempt = 0;
+                do {
+                    collision = false;
+                    for (const auto& other : coins) {
+                        if (&other != &coin && other.stopped) {
+                            float distance = glm::length(coin.position - other.position);
+                            if (distance < min_distance && distance > 0.0f) {
+                                collision = true;
+                                float offset_r = (cylinder_radius - coin_radius - 0.01f) * (static_cast<float>(std::rand()) / RAND_MAX);
+                                float offset_angle = static_cast<float>(std::rand()) / RAND_MAX * 2.0f * M_PI;
+                                coin.position = glm::vec3(offset_r * cos(offset_angle), accumulated_height, offset_r * sin(offset_angle));
+                                break;
+                            }
+                        }
+                    }
+                    attempt++;
+                    if (attempt >= max_attempts) {
+                        coin.position = glm::vec3(0.0f, accumulated_height, 0.0f);
+                        break;
+                    }
+                } while (collision);
+
+                accumulated_height += coin_thickness;
+                if (accumulated_height >= cylinder_base_y + cylinder_height - coin_radius && !disintegrationTriggered) {
+                    disintegrate = true;
+                    disintegrationTriggered = true;
+                    disintegrateTime = 0.0f;
+                    accumulated_height = cylinder_base_y + cylinder_height - coin_radius;
+                }
             }
         }
     }
@@ -275,17 +440,19 @@ int main() {
         float deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        // Обработка SPACE для спавна монет
         int spaceState = glfwGetKey(window, GLFW_KEY_SPACE);
         if (spaceState == GLFW_PRESS && !keyPressed && !disintegrate) {
             Coin newCoin;
             newCoin.position = glm::vec3(0.0f, 0.0f, 0.0f);
+            newCoin.velocity = glm::vec3(0.0f, -0.5f, 0.0f);
             newCoin.angle = static_cast<float>(std::rand()) / RAND_MAX * 2.0f * M_PI;
             newCoin.angularSpeed = 4.0f + static_cast<float>(std::rand()) / RAND_MAX * 2.0f;
-            newCoin.descentSpeed = 0.5f + static_cast<float>(std::rand()) / RAND_MAX * 0.5f;
             newCoin.active = true;
             newCoin.alpha = 1.0f;
             newCoin.fadeTime = 0.0f;
+            newCoin.stopped = false;
+            newCoin.tilt_x = 0.0f;
+            newCoin.tilt_z = 0.0f;
             coins.push_back(newCoin);
             keyPressed = true;
             spacePressCount++;
@@ -295,7 +462,6 @@ int main() {
             keyPressed = false;
         }
 
-        // Обработка O для дезинтеграции конуса (один раз)
         int oState = glfwGetKey(window, GLFW_KEY_O);
         if (oState == GLFW_PRESS && !oKeyPressed && !disintegrationTriggered) {
             disintegrate = true;
@@ -307,8 +473,7 @@ int main() {
             oKeyPressed = false;
         }
 
-        // Управление камерой стрелками
-        float rotationSpeed = 100.0f; // Градусов в секунду
+        float rotationSpeed = 100.0f;
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
             cameraAngleX -= rotationSpeed * deltaTime;
         }
@@ -324,15 +489,13 @@ int main() {
             if (cameraAngleY < -89.0f) cameraAngleY = -89.0f;
         }
 
-        // Управление камерой по оси OY (W/S)
-        float moveSpeed = 2.0f; // Скорость перемещения по оси OY (единиц в секунду)
+        float moveSpeed = 2.0f;
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
             cameraOffsetY += moveSpeed * deltaTime;
         }
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
             cameraOffsetY -= moveSpeed * deltaTime;
         }
-        // Ограничения на высоту
         const float minOffsetY = -5.0f;
         const float maxOffsetY = 5.0f;
         if (cameraOffsetY < minOffsetY) cameraOffsetY = minOffsetY;
@@ -343,7 +506,6 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
 
-        // Настройка камеры
         float camX = cameraDistance * cos(glm::radians(cameraAngleY)) * sin(glm::radians(cameraAngleX));
         float camY = cameraDistance * sin(glm::radians(cameraAngleY)) + cameraOffsetY;
         float camZ = cameraDistance * cos(glm::radians(cameraAngleY)) * cos(glm::radians(cameraAngleX));
@@ -351,16 +513,20 @@ int main() {
 
         setupLighting();
         
-        // Рисование монет
         glCullFace(GL_BACK);
+        for (const auto& coin : coins) {
+            if (coin.active) {
+                drawCoinShadow(coin, accumulated_height);
+            }
+        }
         for (const auto& coin : coins) {
             if (coin.active) {
                 drawCoin(coin);
             }
         }
         
-        // Рисование конуса
         drawFunnel(deltaTime);
+        drawCylinder();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
