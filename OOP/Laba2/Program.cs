@@ -31,9 +31,8 @@ class Rectangle{
         if (Width + dw <= 0 || Height + dh <= 0)
             throw new ArgumentException("размеры должны быть положительными");
             
-        // Изменяем правую границу по X (x2) и нижнюю границу по Y (y1)
         x2 += dw;
-        y1 -= dh; // уменьшаем y1, так как ось Y направлена вверх
+        y1 -= dh;
     }
 
     // минимальный прямоугольник, содержащий два других
@@ -59,6 +58,16 @@ class Rectangle{
         return new Rectangle(newX1, newY1, newX2, newY2);
     }
 
+    // перегрузка * для пересечения
+    public static Rectangle operator *(Rectangle r1, Rectangle r2){
+        return GetIntersection(r1, r2);
+    }
+
+    // перегрузка + для огр. прям.
+    public static Rectangle operator +(Rectangle r1, Rectangle r2){
+        return GetBoundingRectangle(r1, r2);
+    }
+
     // свойства для доступа к параметрам
     public double Left => x1;
     public double Bottom => y1;
@@ -76,28 +85,16 @@ class Program{
     static void Main(){
         try{
             // создание прямоугольников
-            Rectangle r1 = new Rectangle(0, 0, 2, 3);
-            Rectangle r2 = new Rectangle(1, 1, 4, 5);
+            Rectangle r1 = new Rectangle(1, 3, 5, 5);
+            Rectangle r2 = new Rectangle(3, 2, 4, 7);
             
             Console.WriteLine($"r1: {r1}");
             Console.WriteLine($"r2: {r2}");
             
-            // перемещение
-            r1.Move(1, 1);
-            Console.WriteLine($"r1 после перемещения: {r1}");
+            Rectangle bounding = r1 + r2;
+            Console.WriteLine($"ограничивающий прямоугольник: {bounding}");
             
-            // изменение размеров (сохраняя левый верхний угол)
-            Console.WriteLine("Изменяем размер r2 (ширина -1, высота +1)");
-            r2.Resize(-1, 1);
-            Console.WriteLine($"r2 после изменения размеров: {r2}");
-            Console.WriteLine($"Левый верхний угол r2: ({r2.Left}, {r2.Top})");
-            
-            // ограничивающий прямоугольник
-            Rectangle bounding = Rectangle.GetBoundingRectangle(r1, r2);
-            Console.WriteLine($"ограничивающий: {bounding}");
-            
-            // пересечение
-            Rectangle intersection = Rectangle.GetIntersection(r1, r2);
+            Rectangle intersection = r1 * r2;
             Console.WriteLine($"пересечение: {intersection}");
         }
         catch (Exception e){
