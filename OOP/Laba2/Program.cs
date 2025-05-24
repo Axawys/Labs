@@ -1,20 +1,17 @@
 ﻿using System;
 
-class Rectangle
-{
+class Rectangle{
     private double x1, y1; // левый нижний угол
     private double x2, y2; // правый верхний угол
 
     // конструктор без параметров (единичный квадрат)
-    public Rectangle()
-    {
+    public Rectangle(){
         x1 = 0; y1 = 0;
         x2 = 1; y2 = 1;
     }
 
     // конструктор с параметрами
-    public Rectangle(double x1, double y1, double x2, double y2)
-    {
+    public Rectangle(double x1, double y1, double x2, double y2){
         if (x1 >= x2 || y1 >= y2)
             throw new ArgumentException("неправильные координаты прямоугольника");
             
@@ -24,15 +21,13 @@ class Rectangle
         this.y2 = y2;
     }
     
-    public void Move(double dx, double dy)
-    {
+    public void Move(double dx, double dy){
         x1 += dx; x2 += dx;
         y1 += dy; y2 += dy;
     }
 
     // изменение размеров (сохраняя левый верхний угол)
-    public void Resize(double dw, double dh)
-    {
+    public void Resize(double dw, double dh){
         if (Width + dw <= 0 || Height + dh <= 0)
             throw new ArgumentException("размеры должны быть положительными");
             
@@ -42,8 +37,7 @@ class Rectangle
     }
 
     // минимальный прямоугольник, содержащий два других
-    public static Rectangle GetBoundingRectangle(Rectangle r1, Rectangle r2)
-    {
+    public static Rectangle GetBoundingRectangle(Rectangle r1, Rectangle r2){
         return new Rectangle(
             Math.Min(r1.x1, r2.x1),
             Math.Min(r1.y1, r2.y1),
@@ -53,8 +47,7 @@ class Rectangle
     }
 
     // пересечение двух прямоугольников
-    public static Rectangle GetIntersection(Rectangle r1, Rectangle r2)
-    {
+    public static Rectangle GetIntersection(Rectangle r1, Rectangle r2){
         double newX1 = Math.Max(r1.x1, r2.x1);
         double newY1 = Math.Max(r1.y1, r2.y1);
         double newX2 = Math.Min(r1.x2, r2.x2);
@@ -74,19 +67,14 @@ class Rectangle
     public double Width => x2 - x1;
     public double Height => y2 - y1;
 
-    // строковое представление
-    public override string ToString()
-    {
+    public override string ToString(){
         return $"Rectangle[({x1},{y1})-({x2},{y2})]";
     }
 }
 
-class Program
-{
-    static void Main()
-    {
-        try
-        {
+class Program{
+    static void Main(){
+        try{
             // создание прямоугольников
             Rectangle r1 = new Rectangle(0, 0, 2, 3);
             Rectangle r2 = new Rectangle(1, 1, 4, 5);
@@ -112,8 +100,7 @@ class Program
             Rectangle intersection = Rectangle.GetIntersection(r1, r2);
             Console.WriteLine($"пересечение: {intersection}");
         }
-        catch (Exception e)
-        {
+        catch (Exception e){
             Console.WriteLine($"ошибка: {e.Message}");
         }
     }
