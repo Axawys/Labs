@@ -30,15 +30,15 @@ class Rectangle
         y1 += dy; y2 += dy;
     }
 
-    // изменение размеров (от центра)
+    // изменение размеров (сохраняя левый верхний угол)
     public void Resize(double dw, double dh)
     {
-        double w = Width, h = Height;
-        if (w + dw <= 0 || h + dh <= 0)
+        if (Width + dw <= 0 || Height + dh <= 0)
             throw new ArgumentException("размеры должны быть положительными");
             
-        x1 -= dw/2; x2 += dw/2;
-        y1 -= dh/2; y2 += dh/2;
+        // Изменяем правую границу по X (x2) и нижнюю границу по Y (y1)
+        x2 += dw;
+        y1 -= dh; // уменьшаем y1, так как ось Y направлена вверх
     }
 
     // минимальный прямоугольник, содержащий два других
@@ -98,9 +98,11 @@ class Program
             r1.Move(1, 1);
             Console.WriteLine($"r1 после перемещения: {r1}");
             
-            // изменение размеров
+            // изменение размеров (сохраняя левый верхний угол)
+            Console.WriteLine("Изменяем размер r2 (ширина -1, высота +1)");
             r2.Resize(-1, 1);
             Console.WriteLine($"r2 после изменения размеров: {r2}");
+            Console.WriteLine($"Левый верхний угол r2: ({r2.Left}, {r2.Top})");
             
             // ограничивающий прямоугольник
             Rectangle bounding = Rectangle.GetBoundingRectangle(r1, r2);
