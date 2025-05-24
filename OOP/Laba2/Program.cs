@@ -1,81 +1,83 @@
 ﻿using System;
 
-public class RectangleClass
+class Rectangle
 {
-    public int Xpos { get; private set; }
-    public int Ypos { get; private set; }
-    public int Wid { get; private set; }
-    public int Hei { get; private set; }
+    private double x1, y1; // левый нижний угол
+    private double x2, y2; // правый верхний угол
 
-    public RectangleClass(int x, int y, int w, int h)
+    // конструктор без параметров (единичный квадрат)
+    public Rectangle()
     {
-        if (w <= 0 || h <= 0)
-            throw new ArgumentException("Размер должен быть положительным");
-        
-        Xpos = x;
-        Ypos = y;
-        Wid = w;
-        Hei = h;
+        x1 = 0; y1 = 0;
+        x2 = 1; y2 = 1;
     }
 
-    ~RectangleClass()
+    // конструктор с параметрами
+    public Rectangle(double x1, double y1, double x2, double y2)
     {
-        Console.WriteLine($"Деструктор: Прямоугольник {ToString()} уничтожен");
+        if (x1 >= x2 || y1 >= y2)
+            throw new ArgumentException("неправильные координаты прямоугольника");
+            
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
+    }
+    
+    public void Move(double dx, double dy)
+    {
+        x1 += dx; x2 += dx;
+        y1 += dy; y2 += dy;
     }
 
-    public void MoveRect(int dx, int dy)
+    // изменение размеров (от центра)
+    public void Resize(double dw, double dh)
     {
-        Xpos += dx;
-        Ypos += dy;
+        double w = Width, h = Height;
+        if (w + dw <= 0 || h + dh <= 0)
+            throw new ArgumentException("размеры должны быть положительными");
+            
+        x1 -= dw/2; x2 += dw/2;
+        y1 -= dh/2; y2 += dh/2;
     }
 
-    public void ChangeSize(int newW, int newH)
+    // минимальный прямоугольник, содержащий два других
+    public static Rectangle GetBoundingRectangle(Rectangle r1, Rectangle r2)
     {
-        if (newW <= 0 || newH <= 0)
-            throw new ArgumentException("Неправильный размер для изменения!");
-        
-        Wid = newW;
-        Hei = newH;
+        return new Rectangle(
+            Math.Min(r1.x1, r2.x1),
+            Math.Min(r1.y1, r2.y1),
+            Math.Max(r1.x2, r2.x2),
+            Math.Max(r1.y2, r2.y2)
+        );
     }
 
-    public void ChangeSize(int delta)
+    // пересечение двух прямоугольников
+    public static Rectangle GetIntersection(Rectangle r1, Rectangle r2)
     {
-        int newW = Wid + delta;
-        int newH = Hei + delta;
-        
-        if (newW <= 0 || newH <= 0)
-            throw new ArgumentException("Неправильный дельта-размер!");
-        
-        Wid = newW;
-        Hei = newH;
+        double newX1 = Math.Max(r1.x1, r2.x1);
+        double newY1 = Math.Max(r1.y1, r2.y1);
+        double newX2 = Math.Min(r1.x2, r2.x2);
+        double newY2 = Math.Min(r1.y2, r2.y2);
+
+        if (newX1 >= newX2 || newY1 >= newY2)
+            throw new InvalidOperationException("прямоугольники не пересекаются");
+            
+        return new Rectangle(newX1, newY1, newX2, newY2);
     }
 
-    public static RectangleClass GetBigRectangle(RectangleClass r1, RectangleClass r2)
-    {
-        int left = Math.Min(r1.Xpos, r2.Xpos);
-        int top = Math.Min(r1.Ypos, r2.Ypos);
-        int right = Math.Max(r1.Xpos + r1.Wid, r2.Xpos + r2.Wid);
-        int bottom = Math.Max(r1.Ypos + r1.Hei, r2.Ypos + r2.Hei);
-        
-        return new RectangleClass(left, top, right - left, bottom - top);
-    }
+    // свойства для доступа к параметрам
+    public double Left => x1;
+    public double Bottom => y1;
+    public double Right => x2;
+    public double Top => y2;
+    public double Width => x2 - x1;
+    public double Height => y2 - y1;
 
-    public static RectangleClass FindOverlap(RectangleClass a, RectangleClass b)
-    {
-        int startX = Math.Max(a.Xpos, b.Xpos);
-        int endX = Math.Min(a.Xpos + a.Wid, b.Xpos + b.Wid);
-        int startY = Math.Max(a.Ypos, b.Ypos);
-        int endY = Math.Min(a.Ypos + a.Hei, b.Ypos + b.Hei);
-
-        if (endX > startX && endY > startY)
-            return new RectangleClass(startX, startY, endX - startX, endY - startY);
-        
-        return null;
-    }
-
+    // строковое представление
     public override string ToString()
     {
-        return $"[X: {Xpos}, Y: {Ypos}, W: {Wid}, H: {Hei}]";
+        return $"Rectangle[({x1},{y1})-({x2},{y2})]";
     }
 }
 
@@ -83,51 +85,34 @@ class Program
 {
     static void Main()
     {
-        // Оригинальный сценарий
-        RectangleClass rect1 = new RectangleClass(2, 3, 5, 4);
-        RectangleClass rect2 = new RectangleClass(4, 5, 6, 3);
-        
-        Console.WriteLine("Исходные прямоугольники:");
-        Console.WriteLine("Прямоугольник 1: " + rect1);
-        Console.WriteLine("Прямоугольник 2: " + rect2);
-        Console.WriteLine();
-
-        rect1.MoveRect(2, -1);
-        Console.WriteLine("После перемещения первого:");
-        Console.WriteLine(rect1);
-        Console.WriteLine();
-
-        rect2.ChangeSize(4, 6);
-        Console.WriteLine("После изменения размера второго:");
-        Console.WriteLine(rect2);
-        Console.WriteLine();
-
-        RectangleClass big = RectangleClass.GetBigRectangle(rect1, rect2);
-        Console.WriteLine("Наименьший ограничивающий прямоугольник:");
-        Console.WriteLine(big);
-        Console.WriteLine();
-
-        RectangleClass overlap = RectangleClass.FindOverlap(rect1, rect2);
-        Console.WriteLine("Результат пересечения:");
-        Console.WriteLine(overlap == null ? "Нет пересечения" : overlap.ToString());
-        Console.WriteLine();
-
-        rect1.MoveRect(-3, 2);
-        rect1.ChangeSize(7, 5);
-        Console.WriteLine("После дополнительных изменений первого:");
-        Console.WriteLine(rect1);
-        Console.WriteLine();
-
-        RectangleClass big2 = RectangleClass.GetBigRectangle(rect1, rect2);
-        Console.WriteLine("Новый ограничивающий прямоугольник:");
-        Console.WriteLine(big2);
-        Console.WriteLine();
-
-        RectangleClass overlap2 = RectangleClass.FindOverlap(rect1, rect2);
-        Console.WriteLine("Проверка пересечения снова:");
-        Console.WriteLine(overlap2 == null ? "Нет пересечения" : overlap2.ToString());
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
+        try
+        {
+            // создание прямоугольников
+            Rectangle r1 = new Rectangle(0, 0, 2, 3);
+            Rectangle r2 = new Rectangle(1, 1, 4, 5);
+            
+            Console.WriteLine($"r1: {r1}");
+            Console.WriteLine($"r2: {r2}");
+            
+            // перемещение
+            r1.Move(1, 1);
+            Console.WriteLine($"r1 после перемещения: {r1}");
+            
+            // изменение размеров
+            r2.Resize(-1, 1);
+            Console.WriteLine($"r2 после изменения размеров: {r2}");
+            
+            // ограничивающий прямоугольник
+            Rectangle bounding = Rectangle.GetBoundingRectangle(r1, r2);
+            Console.WriteLine($"ограничивающий: {bounding}");
+            
+            // пересечение
+            Rectangle intersection = Rectangle.GetIntersection(r1, r2);
+            Console.WriteLine($"пересечение: {intersection}");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"ошибка: {e.Message}");
+        }
     }
 }
