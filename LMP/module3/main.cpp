@@ -14,6 +14,7 @@ int main() {
 
     int rows, cols;
     input >> rows >> cols;
+    cout << "Размерность матрицы " << rows << " x " << cols << endl;
 
     vector<vector<int>> matrix(rows, vector<int>(cols));
 
