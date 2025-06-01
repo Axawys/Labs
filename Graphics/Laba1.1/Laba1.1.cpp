@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
     float houseHeight = 0.8f * baseScale; // Высота дома с крышей
     float totalLength = 1.8f - houseWidth; // Учитываем ширину последнего дома
     float totalHeight = 1.8f - houseHeight; // Учитываем высоту последнего дома
-    float diagonalLength = sqrt(totalLength * totalLength + totalHeight * totalHeight); // Длина диагонали
+    float diagonalLength = (totalLength * totalLength + totalHeight * totalHeight)* (totalLength * totalLength + totalHeight * totalHeight); // Длина диагонали
     float spacing = (diagonalLength - (numHouses * houseWidth)) / (numHouses + 1); // Отступы
     if (spacing < 0) spacing = 0;
 
